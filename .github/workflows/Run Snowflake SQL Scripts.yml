@@ -14,10 +14,10 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Install SnowSQL
+      - name: Install Snowflake CLI
         run: |
-          curl -O https://sfc-repo.snowflakecomputing.com/snowsql/bootstrap/1.2/linux_x86_64/snowsql-1.2.28-linux_x86_64.bash
-          bash snowsql-1.2.28-linux_x86_64.bash -y
+          python -m pip install --upgrade pip
+          pip install snowflake-cli-labs
 
       - name: Run SQL Scripts
         env:
