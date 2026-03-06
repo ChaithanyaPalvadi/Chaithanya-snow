@@ -24,29 +24,27 @@ jobs:
 
       - name: Install schemachange
         run: |
-          echo "Installing schemachange"
           pip install schemachange
 
-      - name: Run schemachange
-        env:
-          SNOWFLAKE_ACCOUNT: ${{ secrets.SF_ACCOUNT }}
-          SNOWFLAKE_USER: ${{ secrets.SF_USERNAME }}
-          SNOWFLAKE_PASSWORD: ${{ secrets.SF_PASSWORD }}
-          SNOWFLAKE_ROLE: ${{ secrets.SF_ROLE }}
-          SNOWFLAKE_WAREHOUSE: ${{ secrets.SF_WAREHOUSE }}
-          SNOWFLAKE_DATABASE: ${{ secrets.SF_DATABASE }}
+      - name: Create Snowflake connection file
+        run: |
+          mkdir -p ~/.snowflake
+          cat <<EOF > ~/.snowflake/connections.toml
+          [default]
+          account = "${{ secrets.SF_ACCOUNT }}"
+          user = "${{ secrets.SF_USERNAME }}"
+          password = "${{ secrets.SF_PASSWORD }}"
+          role = "${{ secrets.SF_ROLE }}"
+          warehouse = "${{ secrets.SF_WAREHOUSE }}"
+          database = "${{ secrets.SF_DATABASE }}"
+          EOF
 
+      - name: Run schemachange
         run: |
           echo "Running schemachange deployment"
-          echo "Workspace: $GITHUB_WORKSPACE"
 
           schemachange deploy \
+            --connection-name default \
             --root-folder $GITHUB_WORKSPACE \
-            --snowflake-account $SNOWFLAKE_ACCOUNT \
-            --snowflake-user $SNOWFLAKE_USER \
-            --snowflake-password $SNOWFLAKE_PASSWORD \
-            --snowflake-role $SNOWFLAKE_ROLE \
-            --snowflake-warehouse $SNOWFLAKE_WAREHOUSE \
-            --snowflake-database $SNOWFLAKE_DATABASE \
-            --change-history-table $SNOWFLAKE_DATABASE.SCHEMACHANGE.CHANGE_HISTORY \
+            --change-history-table ${{ secrets.SF_DATABASE }}.SCHEMACHANGE.CHANGE_HISTORY \
             --create-change-history-table
