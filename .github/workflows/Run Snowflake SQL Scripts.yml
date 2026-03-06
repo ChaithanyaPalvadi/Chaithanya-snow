@@ -11,30 +11,45 @@ jobs:
 
     steps:
 
-    - name: Checkout Repository
-      uses: actions/checkout@v3
+      - name: Checkout Repository
+        uses: actions/checkout@v3
 
-    - name: Install SnowSQL
-      run: |
-        pip install --upgrade pip
-        pip install snowsql
+      - name: Install SnowSQL
+        run: |
+          curl -O https://sfc-repo.snowflakecomputing.com/snowsql/bootstrap/1.2/linux_x86_64/snowsql-1.2.28-linux_x86_64.bash
+          bash snowsql-1.2.28-linux_x86_64.bash -y
+          export PATH=$HOME/bin:$PATH
+          echo "$HOME/bin" >> $GITHUB_PATH
 
-    - name: Run SQL Scripts
-      env:
-        SF_ACCOUNT: ${{ secrets.SF_ACCOUNT }}
-        SF_USERNAME: ${{ secrets.SF_USERNAME }}
-        SF_PASSWORD: ${{ secrets.SF_PASSWORD }}
-        SF_ROLE: ${{ secrets.SF_ROLE }}
-        SF_WAREHOUSE: ${{ secrets.SF_WAREHOUSE }}
-        SF_DATABASE: ${{ secrets.SF_DATABASE }}
-        SF_SCHEMA: ${{ secrets.SF_SCHEMA }}
+      - name: Verify SnowSQL
+        run: |
+          snowsql -v
 
-      run: |
-        snowsql -a $SF_ACCOUNT \
-                -u $SF_USERNAME \
-                -p $SF_PASSWORD \
-                -r $SF_ROLE \
-                -w $SF_WAREHOUSE \
-                -d $SF_DATABASE \
-                -s $SF_SCHEMA \
-                -f sql/create_table.sql
+      - name: Run SQL Scripts
+        env:
+          SF_ACCOUNT: ${{ secrets.SF_ACCOUNT }}
+          SF_USERNAME: ${{ secrets.SF_USERNAME }}
+          SF_PASSWORD: ${{ secrets.SF_PASSWORD }}
+          SF_ROLE: ${{ secrets.SF_ROLE }}
+          SF_WAREHOUSE: ${{ secrets.SF_WAREHOUSE }}
+          SF_DATABASE: ${{ secrets.SF_DATABASE }}
+          SF_SCHEMA: ${{ secrets.SF_SCHEMA }}
+
+        run: |
+          snowsql -a $SF_ACCOUNT \
+                  -u $SF_USERNAME \
+                  -p $SF_PASSWORD \
+                  -r $SF_ROLE \
+                  -w $SF_WAREHOUSE \
+                  -d $SF_DATABASE \
+                  -s $SF_SCHEMA \
+                  -f sql/create_table.sql
+
+          snowsql -a $SF_ACCOUNT \
+                  -u $SF_USERNAME \
+                  -p $SF_PASSWORD \
+                  -r $SF_ROLE \
+                  -w $SF_WAREHOUSE \
+                  -d $SF_DATABASE \
+                  -s $SF_SCHEMA \
+                  -f sql/load_data.sql
