@@ -10,29 +10,37 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+
       - name: Checkout Repository
         uses: actions/checkout@v3
 
       - name: Install SnowSQL
         run: |
           curl -O https://sfc-repo.snowflakecomputing.com/snowsql/bootstrap/1.2/linux_x86_64/snowsql-1.2.28-linux_x86_64.bash
-          bash snowsql-1.2.28-linux_x86_64.bash
+          bash snowsql-1.2.28-linux_x86_64.bash -y
 
       - name: Run SQL Scripts
         env:
-           SF_ACCOUNT: ${{ secrets.SF_ACCOUNT }}
-           SF_USERNAME: ${{secrets.SF_USERNAME}}
-           SF_ROLE: ${{secrets.SF_ROLE}}
-           SF_WAREHOUSE: ${{secrets.SF_WAREHOUSE}}
-           SF_DATABASE: ${{secrets.SF_DATABASE}}
-           SF_PASSWORD: ${{secrets.SF_PASSWORD}}
-          
-           
+          SF_ACCOUNT: ${{ secrets.SF_ACCOUNT }}
+          SF_USERNAME: ${{ secrets.SF_USERNAME }}
+          SF_ROLE: ${{ secrets.SF_ROLE }}
+          SF_WAREHOUSE: ${{ secrets.SF_WAREHOUSE }}
+          SF_DATABASE: ${{ secrets.SF_DATABASE }}
+          SF_PASSWORD: ${{ secrets.SF_PASSWORD }}
+
         run: |
-          snowsql -a $SNOWFLAKE_ACCOUNT \
-                  -u $SNOWFLAKE_USER \
+          snowsql -a $SF_ACCOUNT \
+                  -u $SF_USERNAME \
+                  -r $SF_ROLE \
+                  -w $SF_WAREHOUSE \
+                  -d $SF_DATABASE \
+                  -p $SF_PASSWORD \
                   -f sql/create_table.sql
 
-          snowsql -a $SNOWFLAKE_ACCOUNT \
-                  -u $SNOWFLAKE_USER \
+          snowsql -a $SF_ACCOUNT \
+                  -u $SF_USERNAME \
+                  -r $SF_ROLE \
+                  -w $SF_WAREHOUSE \
+                  -d $SF_DATABASE \
+                  -p $SF_PASSWORD \
                   -f sql/load_data.sql
