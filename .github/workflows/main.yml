@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'v1.1.1.sql'
+      - 'deploy'
   workflow_dispatch:
 
 jobs:
