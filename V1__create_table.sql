@@ -1,0 +1,1 @@
+create or replace test_table(name varchar , address varchar)
