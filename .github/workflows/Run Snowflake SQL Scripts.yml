@@ -1,55 +1,42 @@
-name: Snowflake SQL Deployment
+name: snowflake-migration-git
 
-on:
-  push:
-    branches:
-      - main
+on: 
+ push:
+   branchs:
+     -main
+   paths:
+     -'v1.1.1.sql'
+ workflow_dispatch:
 
 jobs:
-  deploy-sql:
+  deploy-snowflake-changes-job:
     runs-on: ubuntu-latest
 
     steps:
+       -name: Checkout repository
+        uses: actions/checkout@v2
 
-      - name: Checkout Repository
-        uses: actions/checkout@v3
+      -name: Use python 3.8.x
+       uses: actions/setup-python@v2.2.1
+       with:
+         python-version: 3.8.x
 
-      - name: Install SnowSQL
-        run: |
-          curl -O https://sfc-repo.snowflakecomputing.com/snowsql/bootstrap/1.2/linux_x86_64/snowsql-1.2.28-linux_x86_64.bash
-          bash snowsql-1.2.28-linux_x86_64.bash -y
-          export PATH=$HOME/bin:$PATH
-          echo "$HOME/bin" >> $GITHUB_PATH
+      -name: Run schemachange
+       env:
+         SF_ACCOUNT: ${{ secrets.SF_ACCOUNT }}
+         SF_USERNAME: ${{ secrets.SF_USERNAME }}
+         SF_PASSWORD: ${{ secrets.SF_PASSWORD }}
+         SF_ROLE: ${{ secrets.SF_ROLE }}
+         SF_WAREHOUSE: ${{ secrets.SF_WAREHOUSE }}
+         SF_DATABASE: ${{ secrets.SF_DATABASE }}
 
-      - name: Verify SnowSQL
-        run: |
-          snowsql -v
 
-      - name: Run SQL Scripts
-        env:
-          SF_ACCOUNT: ${{ secrets.SF_ACCOUNT }}
-          SF_USERNAME: ${{ secrets.SF_USERNAME }}
-          SF_PASSWORD: ${{ secrets.SF_PASSWORD }}
-          SF_ROLE: ${{ secrets.SF_ROLE }}
-          SF_WAREHOUSE: ${{ secrets.SF_WAREHOUSE }}
-          SF_DATABASE: ${{ secrets.SF_DATABASE }}
-          SF_SCHEMA: ${{ secrets.SF_SCHEMA }}
 
-        run: |
-          snowsql -a $SF_ACCOUNT \
-                  -u $SF_USERNAME \
-                  -p $SF_PASSWORD \
-                  -r $SF_ROLE \
-                  -w $SF_WAREHOUSE \
-                  -d $SF_DATABASE \
-                  -s $SF_SCHEMA \
-                  -f sql/create_table.sql
+      run:  |
+         echo "GITHUB WORKSPACE: $GITHUB_WORKSPACE"
+         python --version
+         echo "Step 1: Installing schemachange"
+         pip install schema change
 
-          snowsql -a $SF_ACCOUNT \
-                  -u $SF_USERNAME \
-                  -p $SF_PASSWORD \
-                  -r $SF_ROLE \
-                  -w $SF_WAREHOUSE \
-                  -d $SF_DATABASE \
-                  -s $SF_SCHEMA \
-                  -f sql/load_data.sql
+         echo "Step 2 : Running schemachange"
+         schemachange -f $GITHUB_WORKSPACE/v1.1.1.sql -a $SF_ACCOUNT -u $SF_USERNAME -r $SF_ROLE -w $SF_WAREHOUSE -d $SF_DATABASE -C $SF_DATABASE.SCHEMACHANGE.CHANGE_HISTORY  --create-change-history-table
